@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jogo da Velha</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      position: relative;
+      overflow: hidden;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    p {
+      background-color: #f8f8f8;
+      font-size: 1.2rem;
+    }
+    .jogadores {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 30px;
+    }
+    .jogador {
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding: 10px 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background-color: #f8f8f8;
+      cursor: pointer;
+    }
+    .tabuleiro {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      justify-content: center;
+    }
+    .casa {
+      background-color: #f0f0f0;
+      border: 2px solid #ccc;
+      font-size: 2.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mensagem de vitória */
+    #mensagemVitoria {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff3cd;
+      color: #856404;
+      font-size: 2rem;
+      padding: 20px 40px;
+      border: 2px solid #ffeeba;
+      border-radius: 10px;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    /* Balões */
+    #baloesContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    .balao {
+      position: absolute;
+      font-size: 2rem;
+      animation: subir 4s linear forwards;
+    }
+
+    @keyframes subir {
+      0% {
+        bottom: -50px;
+        opacity: 1;
+      }
+      100% {
+        bottom: 100vh;
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Jogo da Velha</h1>
+
+  <div class="jogadores">
+    <p>Jogador 1</p>
+    <div class="jogador" id="jogador1">X</div>
+    <div class="jogador" id="jogador2">O</div>
+    <p>Jogador 2</p>
+  </div>
+
+  <div class="tabuleiro">
+    <div class="casa" data-index="0"></div>
+    <div class="casa" data-index="1"></div>
+    <div class="casa" data-index="2"></div>
+    <div class="casa" data-index="3"></div>
+    <div class="casa" data-index="4"></div>
+    <div class="casa" data-index="5"></div>
+    <div class="casa" data-index="6"></div>
+    <div class="casa" data-index="7"></div>
+    <div class="casa" data-index="8"></div>
+  </div>
+
+  <!-- Mensagem e balões -->
+  <div id="mensagemVitoria"></div>
+  <div id="baloesContainer"></div>
+
+  <script>
+    const tabuleiro = document.querySelector(".tabuleiro")
+    const casas = document.getElementsByClassName("casa");
+    const jogadores = document.getElementsByClassName("jogador");
+    let jogadorAtual = null;
+
+    const vitorias = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    function verificarVitoria(jogador) {
+      return vitorias.some(combinacao => {
+        return combinacao.every(index => casas[index].textContent === jogador
+        );   
+      });
+    }
+
+
+    function mostrarVitoria(texto) {
+      const mensagem = document.getElementById("mensagemVitoria");
+      mensagem.textContent = texto;
+      mensagem.style.display = "block";
+
+      // Balões subindo
+      const container = document.getElementById("baloesContainer");
+      for (let i = 0; i < 30; i++) {
+        const balao = document.createElement("div");
+        balao.classList.add("balao");
+        balao.textContent = "🎈";
+        balao.style.left = Math.random() * 100 + "vw";
+        balao.style.animationDuration = (2 + Math.random() * 2) + "s";
+        container.appendChild(balao);
+        setTimeout(() => balao.remove(), 4000);
+      }
+
+      // Reiniciar o jogo após 4 segundos
+      setTimeout(() => location.reload(), 5000);
+    }
+
+    for (let jogador of jogadores) {
+      jogador.addEventListener("click", (event) => {
+        jogadorAtual = event.target.textContent.trim();
+      });
+    }
+
+    for (let casa of casas) {
+      casa.addEventListener("click", (event) => {
+        const casaClicada = event.target;
+        
+        if (jogadorAtual === null) 
+        {
+          alert("Antes de iniciar, escolha primeiro um jogador [X] ou [O]");
+          location.reload();
+          return;
+        }
+
+        casaClicada.style.background = jogadorAtual === "X" ? "#4A90E2" : "#E94E77";
+
+        if (casaClicada.textContent === "") {
+          casaClicada.textContent = jogadorAtual;
+
+          if (verificarVitoria(jogadorAtual)) {
+            tabuleiro.style.pointerEvents = "none";// desativaTabuleiro()
+            const vencedor = jogadorAtual === "X" ? "Jogador 1" : "Jogador 2";
+            mostrarVitoria(`🎉 ${vencedor} venceu!`);
+            
+            return;
+          }
+
+          jogadorAtual = jogadorAtual === "X" ? "O" : "X";
+        }
+      }, { once: true });
+      
+    }
+  </script>
+
+</body>
+</html>
+
+
